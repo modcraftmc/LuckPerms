@@ -34,17 +34,13 @@ import me.lucko.luckperms.common.plugin.util.AbstractConnectionListener;
 import me.lucko.luckperms.forge.ForgeSenderFactory;
 import me.lucko.luckperms.forge.LPForgePlugin;
 import me.lucko.luckperms.forge.capabilities.UserCapabilityImpl;
-import me.lucko.luckperms.forge.util.AsyncConfigurationTask;
 import net.kyori.adventure.text.Component;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.Connection;
-import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.login.ClientboundLoginDisconnectPacket;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.ConfigurationTask;
-import net.minecraft.server.network.ServerConfigurationPacketListenerImpl;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
-import net.minecraftforge.event.network.GatherLoginConfigurationTasksEvent;
+import net.minecraftforge.event.entity.player.PlayerNegotiationEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -52,8 +48,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class ForgeConnectionListener extends AbstractConnectionListener {
-    private static final ConfigurationTask.Type USER_LOGIN_TASK_TYPE = new ConfigurationTask.Type("luckperms:user_login");
-
     private final LPForgePlugin plugin;
 
     public ForgeConnectionListener(LPForgePlugin plugin) {
@@ -62,27 +56,17 @@ public class ForgeConnectionListener extends AbstractConnectionListener {
     }
 
     @SubscribeEvent
-    public void onGatherLoginConfigurationTasks(GatherLoginConfigurationTasksEvent event) {
-        PacketListener packetListener = event.getConnection().getPacketListener();
-        if (!(packetListener instanceof ServerConfigurationPacketListenerImpl)) {
-            return;
-        }
-
-        GameProfile gameProfile = ((ServerConfigurationPacketListenerImpl) packetListener).getOwner();
-        if (gameProfile == null) {
-            return;
-        }
-
-        String username = gameProfile.getName();
-        UUID uniqueId = gameProfile.getId();
+    public void onPlayerNegotiationEvent(PlayerNegotiationEvent event) {
+        String username = event.getProfile().getName();
+        UUID uniqueId = event.getProfile().isComplete() ? event.getProfile().getId() : UUIDUtil.createOfflinePlayerUUID(username);
 
         if (this.plugin.getConfiguration().get(ConfigKeys.DEBUG_LOGINS)) {
             this.plugin.getLogger().info("Processing pre-login (sync phase) for " + uniqueId + " - " + username);
         }
 
-        event.addTask(new AsyncConfigurationTask(this.plugin, USER_LOGIN_TASK_TYPE, ctx -> CompletableFuture.runAsync(() -> {
-            onPlayerNegotiationAsync(ctx.getConnection(), uniqueId, username);
-        }, this.plugin.getBootstrap().getScheduler().async())));
+        event.enqueueWork(CompletableFuture.runAsync(() -> {
+            onPlayerNegotiationAsync(event.getConnection(), uniqueId, username);
+        }, this.plugin.getBootstrap().getScheduler().async()));
     }
 
     private void onPlayerNegotiationAsync(Connection connection, UUID uniqueId, String username) {

@@ -34,7 +34,7 @@ import net.luckperms.api.context.ContextConsumer;
 import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.context.DefaultContextKeys;
 import net.luckperms.api.context.ImmutableContextSet;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -68,7 +68,7 @@ public class ForgePlayerCalculator implements ContextCalculator<ServerPlayer> {
 
     @Override
     public void calculate(@NonNull ServerPlayer target, @NonNull ContextConsumer consumer) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
         if (this.dimensionType) {
             consumer.accept(DefaultContextKeys.DIMENSION_TYPE_KEY, getContextKey(level.dimension().location()));
         }
@@ -100,7 +100,7 @@ public class ForgePlayerCalculator implements ContextCalculator<ServerPlayer> {
 
         MinecraftServer server = this.plugin.getBootstrap().getServer().orElse(null);
         if (this.dimensionType && server != null) {
-            server.registryAccess().registry(Registries.DIMENSION_TYPE).ifPresent(registry -> {
+            server.registryAccess().registry(Registry.DIMENSION_TYPE_REGISTRY).ifPresent(registry -> {
                 for (ResourceLocation resourceLocation : registry.keySet()) {
                     builder.add(DefaultContextKeys.DIMENSION_TYPE_KEY, getContextKey(resourceLocation));
                 }
