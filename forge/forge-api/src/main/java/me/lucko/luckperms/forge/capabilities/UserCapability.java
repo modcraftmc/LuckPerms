@@ -41,7 +41,7 @@ public interface UserCapability {
     /**
      * The identifier used for the capability
      */
-    ResourceLocation IDENTIFIER = ResourceLocation.fromNamespaceAndPath("luckperms", "user");
+    ResourceLocation IDENTIFIER = ResourceLocation.tryBuild("luckperms", "user");
 
     /**
      * The capability instance.

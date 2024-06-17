@@ -100,7 +100,7 @@ public class ForgeConnectionListener extends AbstractConnectionListener {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onPlayerLoggedIn(PlayerLoggedInEvent event) {
+    public void onPlayerLoadFromFile(PlayerEvent.LoadFromFile event) {
         ServerPlayer player = (ServerPlayer) event.getEntity();
         GameProfile profile = player.getGameProfile();
 

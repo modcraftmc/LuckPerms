@@ -118,7 +118,7 @@ public class ForgeSenderFactory extends SenderFactory<LPForgePlugin, CommandSour
     }
 
     public static net.minecraft.network.chat.Component toNativeText(Component component) {
-        return Serializer.fromJson(GsonComponentSerializer.gson().serializeToTree(component), RegistryAccess.EMPTY);
+        return Serializer.fromJson(GsonComponentSerializer.gson().serializeToTree(component));
     }
 
 }
